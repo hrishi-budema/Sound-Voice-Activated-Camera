@@ -6,7 +6,6 @@
 #include <Preferences.h>
 
 Preferences preferences;
-// ESP32 Wrover Module / AI Thinker ESP-32 CAM 
 
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
@@ -141,3 +140,4 @@ void loop() {
 
   delay(2);
 }
+
