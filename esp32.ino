@@ -6,6 +6,7 @@
 #include <Preferences.h>
 
 Preferences preferences;
+// ESP32 Wrover Module / AI Thinker ESP-32 CAM 
 
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
@@ -24,17 +25,9 @@ Preferences preferences;
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
-#define TRIGGER_PIN 3   
+#define TRIGGER_PIN 3
 #define FLASH_PIN   4
-
 bool armed = true;
-
-void blinkN(int n, int onMs=120, int offMs=120) {
-  for (int i=0;i<n;i++) {
-    digitalWrite(FLASH_PIN, HIGH); delay(onMs);
-    digitalWrite(FLASH_PIN, LOW);  delay(offMs);
-  }
-}
 
 camera_fb_t* captureStable() {
   camera_fb_t *tmp = esp_camera_fb_get();
@@ -46,7 +39,6 @@ camera_fb_t* captureStable() {
 bool saveJpeg(uint32_t n, const uint8_t *buf, size_t len) {
   char path[32];
   snprintf(path, sizeof(path), "/PIC%04lu.jpg", (unsigned long)n);
-
   File f = SD_MMC.open(path, FILE_WRITE);
   if (!f) return false;
   size_t w = f.write(buf, len);
@@ -57,19 +49,15 @@ bool saveJpeg(uint32_t n, const uint8_t *buf, size_t len) {
 
 void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
-
   pinMode(FLASH_PIN, OUTPUT);
   digitalWrite(FLASH_PIN, LOW);
-
   pinMode(TRIGGER_PIN, INPUT);
-
   if (!SD_MMC.begin("/sdcard", true) || SD_MMC.cardType() == CARD_NONE) {
-    while (true) { // SD fail
+    while (true) {
       digitalWrite(FLASH_PIN, HIGH); delay(100);
       digitalWrite(FLASH_PIN, LOW);  delay(100);
     }
   }
-
   preferences.begin("SD", false);
 
   camera_config_t config;
@@ -94,48 +82,61 @@ void setup() {
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
 
-  config.frame_size   = FRAMESIZE_QVGA;   
-  config.jpeg_quality = 12;
-  config.fb_count     = psramFound() ? 2 : 1;
+  if (psramFound()) {
+    config.frame_size   = FRAMESIZE_UXGA;
+    config.jpeg_quality = 10;
+    config.fb_count     = 2;
+  } else {
+    config.frame_size   = FRAMESIZE_SVGA;
+    config.jpeg_quality = 12;
+    config.fb_count     = 1;
+  }
 
   if (esp_camera_init(&config) != ESP_OK) {
-    while (true) { // camera fail
+    while (true) {
       digitalWrite(FLASH_PIN, HIGH); delay(400);
       digitalWrite(FLASH_PIN, LOW);  delay(400);
     }
   }
 
-  blinkN(2, 200, 200); 
+  sensor_t *s = esp_camera_sensor_get();
+  if (s) {
+    s->set_brightness(s, 1);
+    s->set_contrast(s, 1);
+    s->set_saturation(s, -1);
+  }
+
+  digitalWrite(FLASH_PIN, HIGH); delay(200);
+  digitalWrite(FLASH_PIN, LOW);  delay(200);
+  digitalWrite(FLASH_PIN, HIGH); delay(200);
+  digitalWrite(FLASH_PIN, LOW);  delay(200);
 }
 
 void loop() {
   int t = digitalRead(TRIGGER_PIN);
-
-  if (t == LOW) { armed = true; delay(2); return; }
+  if (t == LOW) {
+    armed = true;
+    delay(2);
+    return;
+  }
 
   if (t == HIGH && armed) {
     armed = false;
-
     digitalWrite(FLASH_PIN, HIGH);
-    delay(300);
-    digitalWrite(FLASH_PIN, LOW);
+    delay(120);
 
     camera_fb_t *fb = captureStable();
-    if (!fb) { blinkN(4); return; }
+    digitalWrite(FLASH_PIN, LOW);
+    if (!fb) return;
 
     uint32_t n = preferences.getUInt("number", 0) + 1;
+    delay(150);
+
     bool ok = saveJpeg(n, fb->buf, fb->len);
-
     esp_camera_fb_return(fb);
+    if (ok) preferences.putUInt("number", n);
 
-    if (ok) {
-      preferences.putUInt("number", n);
-      blinkN(1, 250, 250);
-    } else {
-      blinkN(2, 250, 250);
-    }
-
-    delay(1500);
+    delay(2000);
   }
 
   delay(2);
