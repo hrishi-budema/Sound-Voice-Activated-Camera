@@ -5,7 +5,7 @@
 
 A collaborative project to build a camera that takes a photo when a loud sound (like a clap) is detected and saves it to an SD card.
 
-<img src="images/wholeproject(new).png" width="340">
+<img src="images/wholeproject(new2).png" width="340">
 
 
 <div style="display: flex; gap: 10px; margin-top: 10px; align-items: center;">
