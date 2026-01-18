@@ -1,8 +1,22 @@
 # Sound-Voice-Activated-Camera
+![Arduino](https://img.shields.io/badge/Platform-Arduino-blue)
+![ESP32](https://img.shields.io/badge/Board-ESP32-green)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
 A collaborative project to build a camera that takes a photo when a loud sound (like a clap) is detected and saves it to an SD card.
 
-![All Components Cleaned](images/AllComponentsCleaned_bb_png.png)
+<img src="images/wholeproject(new).png" width="340">
+
+
+<div style="display: flex; gap: 10px; margin-top: 10px; align-items: center;">
+  <div style="text-align:center">
+    <img src="images/greenimage.jpg" width="120"><br>
+  </div>
+  <div style="text-align:center">
+    <img src="images/whiteimage.jpg" width="120"><br>
+  </div>
+</div>
+
 
 ## Requirements
 

@@ -26,6 +26,7 @@ Preferences preferences;
 
 #define TRIGGER_PIN 3
 #define FLASH_PIN   4
+
 bool armed = true;
 
 camera_fb_t* captureStable() {
@@ -38,25 +39,31 @@ camera_fb_t* captureStable() {
 bool saveJpeg(uint32_t n, const uint8_t *buf, size_t len) {
   char path[32];
   snprintf(path, sizeof(path), "/PIC%04lu.jpg", (unsigned long)n);
+
   File f = SD_MMC.open(path, FILE_WRITE);
   if (!f) return false;
+
   size_t w = f.write(buf, len);
   f.flush();
   f.close();
+
   return (w == len);
 }
 
 void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
+
   pinMode(FLASH_PIN, OUTPUT);
   digitalWrite(FLASH_PIN, LOW);
   pinMode(TRIGGER_PIN, INPUT);
+
   if (!SD_MMC.begin("/sdcard", true) || SD_MMC.cardType() == CARD_NONE) {
     while (true) {
       digitalWrite(FLASH_PIN, HIGH); delay(100);
       digitalWrite(FLASH_PIN, LOW);  delay(100);
     }
   }
+
   preferences.begin("SD", false);
 
   camera_config_t config;
@@ -113,6 +120,7 @@ void setup() {
 
 void loop() {
   int t = digitalRead(TRIGGER_PIN);
+
   if (t == LOW) {
     armed = true;
     delay(2);
@@ -125,7 +133,9 @@ void loop() {
     delay(120);
 
     camera_fb_t *fb = captureStable();
+
     digitalWrite(FLASH_PIN, LOW);
+
     if (!fb) return;
 
     uint32_t n = preferences.getUInt("number", 0) + 1;
@@ -133,6 +143,7 @@ void loop() {
 
     bool ok = saveJpeg(n, fb->buf, fb->len);
     esp_camera_fb_return(fb);
+
     if (ok) preferences.putUInt("number", n);
 
     delay(2000);
@@ -140,4 +151,3 @@ void loop() {
 
   delay(2);
 }
-

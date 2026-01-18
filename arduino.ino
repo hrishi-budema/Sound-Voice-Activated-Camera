@@ -166,14 +166,12 @@ void handleVUMeter(unsigned long now) {
   lastVU = now;
 
   int v = analogRead(soundAnalogPin);
-
   baseline = (baseline * 31 + v) / 32;
 
   int amp = v - baseline;
   if (amp < 0) amp = -amp;
 
   if (amp > peak) peak = amp;
-
   if (now - lastDecay >= decayMs) {
     lastDecay = now;
     if (peak > 0) peak -= 2;
@@ -258,7 +256,6 @@ void setup() {
   motor2.write(m2);
 
   lastMoveTime = millis();
-
   baseline = analogRead(soundAnalogPin);
 }
 
